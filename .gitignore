@@ -17,6 +17,7 @@ logs/*
 # Dataset local, banco e lotes gerados — não versionar
 data/*
 !data/.gitkeep
+!data/lote_teste.csv
 *.db
 *.db-wal
 *.db-shm
