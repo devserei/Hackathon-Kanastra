@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Antecipe</title>
+    <link rel="stylesheet" href="/estatico/app.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <p class="marca">Antecipe FIDC</p>
+        <h1>Lote de recebíveis</h1>
+      </header>
+      <form class="envio" id="envio">
+        <label>
+          CSV do lote
+          <input id="arquivo" type="file" accept=".csv,text/csv" />
+        </label>
+        <button id="enviar" type="submit" disabled>Analisar lote</button>
+        <button id="exemplo" type="button">Lote de exemplo</button>
+      </form>
+      <p class="erro" id="erro" hidden></p>
+      <section class="resumo" id="resumo" hidden>
+        <p><span>Aceitas</span><strong id="aceitas"></strong></p>
+        <p><span>Recusadas</span><strong id="recusadas"></strong></p>
+        <p><span>Líquido do lote</span><strong id="liquido"></strong></p>
+        <p><span>Face que ficou de fora</span><strong id="face"></strong></p>
+      </section>
+      <div id="listas" hidden>
+        <section id="bloco-aceitas"></section>
+        <section id="bloco-recusadas"></section>
+      </div>
+    </main>
+    <script src="/estatico/app.js"></script>
+  </body>
+</html>

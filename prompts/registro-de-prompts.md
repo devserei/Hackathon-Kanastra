@@ -94,3 +94,72 @@ src/antecipe/configuracao.py e tests/test_configuracao.py
 > O fluxo que eu quero é normalizar, depois avaliar, e os próximos passos nessa mesma sequência.
 
 - **O que foi feito com a resposta:** O caminho de uma nota passou a ser `normalizar.py` e, em seguida, `avaliar.py`. As regras deixaram de ser uma etapa e foram para `regras.py`, chamado só pelo avaliar. Saíram `dinheiro.py`, `cnpj.py`, `prazo.py`, `preco.py` e a pasta `validadores/`. A configuração continua em `configuracao.py`, fora dessa sequência. Os testes seguiram passando.
+
+## Prompt 8
+
+- **Data e hora:** 2026-10-24 11:42 (UTC-3)
+- **Prompt:**
+
+> Vamos iniciar a etapa de indexação.
+
+- **O que foi feito com a resposta:** Criado `src/antecipe/estoque.py`, o passo depois do avaliar. Um passe lê o estoque com `ler_linha` e monta o índice. `buscar` responde se a chave cedente + número + vencimento já existe, e `total_raiz` soma a carteira do ANTECIPE por raiz de CNPJ. `avaliar_nota` não entra nesse passe. Três testes passaram, inclusive o arquivo de 100 mil linhas.
+
+## Prompt 9
+
+- **Data e hora:** 2026-10-24 11:53 (UTC-3)
+- **Prompt:**
+
+> Perfeito, faça:
+>
+> 1. Os cortes e simplificações;
+> 2. Teste o código novo;
+> 3. Envie os comandos para eu mesmo testar o código;
+> 4. Etapa 4;
+> 5. Prompts novos
+
+- **O que foi feito com a resposta:** O fluxo ficou em `normalizar.py`, `avaliar.py` e `lote.py`. Saíram `regras.py`, `estoque.py`, `contrato.md`, `operacao.json` e o cadastro vazio. A situação cadastral só recusa quando existe uma lista. O lote decide duplicidade e concentração de cima para baixo. 26 testes passaram.
+
+## Prompt 10
+
+- **Data e hora:** 2026-10-24 12:04 (UTC-3)
+- **Prompt:**
+
+> Perfeito, faça um frontend bem simples pois vamos altrá-lo usando componentes do React Bits depois. Preciso apenas avaliar as informações de recusas para fazermos uma filtragem depois. 
+
+- **O que foi feito com a resposta:** A tela envia o CSV e mostra a decisão do lote: aceita ou recusada, motivo, líquido e total. A página que abre agora está em `web/estatico` e o `servidor.py` chama o mesmo `lote.py`. Os componentes React ficaram em `web/src/components` (`Envio`, `Resumo`, `ListaNotas`) para serem trocados pelos do React Bits.
+
+## Prompt 11
+
+- **Data e hora:** 2026-10-24 12:31 (UTC-3)
+- **Prompt:**
+
+> Faça essa junção de código ou automação para mim, depois anote o prompt
+
+- **O que foi feito com a resposta:** O estoque continua fixo e o arquivo novo entra pelo lote. Criei `exemplos/lote_novo.csv` e o botão "Lote de exemplo", que chama `processar` com os dois. O exemplo tem uma nota aceita e quatro recusas: já adquirida, cheque, valor abaixo do mínimo e concentração.
+
+## Prompt 12
+
+- **Data e hora:** 2026-10-24 12:34 (UTC-3)
+- **Prompt:**
+
+> Qual é a escalabilidade deste serviço? Quero a complexidade e o O(n) das varreduras, das leituras e das comparações que ainda formos fazer. Isso aguenta arquivos de 500 mil linhas, 1 milhão, 2 milhões, 3 milhões?
+
+- **O que foi feito com a resposta:** A leitura e a decisão são uma passagem em cada arquivo, O(n). A comparação com o estoque, depois do índice pronto, é O(1) por nota. O estoque de 100 mil linhas leva cerca de 1,6 s. Quinhentas mil linhas seguem o mesmo formato, na casa de 8 s. Um, dois e três milhões continuam lineares, com o limite prático na memória, porque o arquivo inteiro entra de uma vez e a resposta devolve todas as linhas.
+
+## Prompt 13
+
+- **Data e hora:** 2026-10-24 13:51 (UTC-3)
+- **Prompt:**
+
+> Vimos os dois arquivos novos do Notion, o resultado esperado das 100 mil linhas e o mock de situação cadastral. Estamos implementando os dois no projeto.
+
+- **O que foi feito com a resposta:** O `cnpj_situacao_mock.csv` passou a alimentar a regra de situação cadastral. O arquivo enviado é classificado como a carteira: prazo entre aquisição e vencimento, concentração pela participação final de cada raiz no fundo, e o `resultado_esperado_100k.json` confere essas decisões nas 100.554 linhas.
+
+## Prompt 14
+
+- **Data e hora:** 2026-10-24 14:06 (UTC-3)
+- **Prompt:**
+
+> Ok, para finalizarmos este projeto, o que falta? Lembre-se das 8 etapas ou mais
+
+- **O que foi feito com a resposta:** O README passou a explicar como subir a tela. Cada lote grava um log JSON só com duração, quantidades e códigos das regras. O estoque de 100.554 linhas levou 3,1 s e um arquivo de 500.000 linhas, no mesmo formato, levou 15,9 s. A tela mostra o valor de face que ficou de fora.
