@@ -28,7 +28,17 @@ Escolha o CSV do lote e clique em **Clique aqui para analisar o lote**. **Consul
 
 ## Onde fica o CSV
 
-O arquivo grande da organização fica em `data/estoque_antecipe.csv`. Essa pasta não entra no Git.
+O clone não traz o estoque. Depois do `git clone`, a pasta `data/` só tem o arquivo vazio `.gitkeep`.
+
+Para analisar as 100.554 linhas, copie o CSV da organização para este caminho, com este nome:
+
+```
+data/estoque_antecipe.csv
+```
+
+Sem esse arquivo a aplicação sobe do mesmo jeito. A tela abre e **Consultar notas salvas** responde vazia. O arquivo só é necessário para a análise do estoque.
+
+Não envie esse CSV ao Git. A pasta `data/` fica de fora de propósito. O mesmo vale para `data/lote_500k.csv`, `data/lote_1m.csv` e para o banco `data/antecipe.db`, que o servidor cria sozinho quando uma nota nova é aceita.
 
 O mock de situação cadastral já está em `config/cnpj_situacao_mock.csv`. Os sacados que este fundo recusa estão em `config/sacados_recusados.txt`. As regras do fundo estão em `config/validadores_antecipe.json`.
 
