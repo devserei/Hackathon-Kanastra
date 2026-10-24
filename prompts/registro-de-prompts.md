@@ -163,3 +163,135 @@ src/antecipe/configuracao.py e tests/test_configuracao.py
 > Ok, para finalizarmos este projeto, o que falta? Lembre-se das 8 etapas ou mais
 
 - **O que foi feito com a resposta:** O README passou a explicar como subir a tela. Cada lote grava um log JSON só com duração, quantidades e códigos das regras. O estoque de 100.554 linhas levou 3,1 s e um arquivo de 500.000 linhas, no mesmo formato, levou 15,9 s. A tela mostra o valor de face que ficou de fora.
+
+## Prompt 15
+
+- **Data e hora:** 2026-10-24 14:14 (UTC-3)
+- **Prompt:**
+
+> Tem certeza que a validação de cnpj funciona? Não deveria ser realizado um cálculo matemático para validar?
+
+- **O que foi feito com a resposta:** A validação já faz o cálculo dos dois dígitos verificadores, módulo 11, em `cnpj_valido` e `_digito`. Um CNPJ com o último dígito trocado é recusado. Nenhum código novo foi escrito.
+
+## Prompt 16
+
+- **Data e hora:** 2026-10-24 14:21 (UTC-3)
+- **Prompt:**
+
+> Quero refazer este front end por completo, misturando detalhes em preto, branco e cinza. Estilo minimalista e simples, com um pouco de tech.
+>
+> Utilize:
+>
+> Componente 1 para registrar loading do arquivo csv: https://www.reactbits.dev/micro/lattice-loader
+>
+> Componente 2 como background: https://www.reactbits.dev/backgrounds/scanner
+
+- **O que foi feito com a resposta:** A tela passou a ser preta, branca e cinza. O Lattice Loader aparece enquanto o CSV é lido. O Scanner, em tons de cinza, fica no fundo. Os dois vieram do registro do React Bits. O `npm install` não concluiu por causa do certificado do registry, então a página que o servidor abre usa o mesmo shader e o mesmo CSS, sem o pacote React.
+
+## Prompt 17
+
+- **Data e hora:** 2026-10-24 14:31 (UTC-3)
+- **Prompt:**
+
+> Acha que poderíamos usar uma linguagem como C++ ou Rust para processarmos os dados em situações específicas?
+
+- **O que foi feito com a resposta:** A resposta foi que o Python já mede os volumes do edital: 100.554 linhas em 3,1 s e 500.000 linhas em 15,9 s. C++ ou Rust caberiam só num trecho quente, se o volume fosse de milhões de linhas. Nenhum código novo foi escrito.
+
+## Prompt 18
+
+- **Data e hora:** 2026-10-24 14:38 (UTC-3)
+- **Prompt:**
+
+> 1. Coloque barras verticais verdes para aceita e vermelha para recusadas; 2. Essa expressão "face que ficou de fora" está estranha, remova; 3. Permita que eu filtre as notas recusadas por X categorias (crie um número ideal para consulta) e use este componente no front: https://www.reactbits.dev/components/dock
+
+- **O que foi feito com a resposta:** Aceitas ficaram com barra verde e recusadas com barra vermelha, no resumo e em cada linha. A frase sobre o valor de face que ficou de fora saiu da tela. O filtro das recusadas usa sete categorias: todas, tipo, valor, prazo, cadastro, grupo e duplicata.
+
+## Prompt 19
+
+- **Data e hora:** 2026-10-24 14:42 (UTC-3)
+- **Prompt:**
+
+> Permita também que o tempo de carregamento fique explícito após carregar o arquivo csv
+
+- **O que foi feito com a resposta:** O indicador de carga passa a mostrar “Lote lido em” e congela o tempo quando a leitura acaba. Em erro, o relógio dessa tentativa não fica na tela.
+
+## Prompt 20
+
+- **Data e hora:** 2026-10-24 14:44 (UTC-3)
+- **Prompt:**
+
+> 1. A listagem de aceitas e recusadas está uma em cima da outra, permita que eu clique em um botão e possa alternar entre elas (ou A ou R); 2. A filtragem de recusadas deve estar colada ou ao lado da categoria de recusadas, e não acompanhando o cursor do mouse; 3. Consegue usar o FIGMA para deixar ainda melhor?
+
+- **O que foi feito com a resposta:** A tela mostra uma lista por vez, com os botões A e R. O dock só aparece em Recusadas, colado nessa categoria. Os ícones não acompanham mais o cursor. O Figma não estava ligado nesta sessão; o ajuste foi feito na própria página.
+
+## Prompt 21
+
+- **Data e hora:** 2026-10-24 14:50 (UTC-3)
+- **Prompt:**
+
+> 1. Permita filtros para olhar de 10 em 10, 20 em 20, 50 em 50, 100, 200... 2. Reduz um pouco o tamanho dos icones de filtro por recusa e deixe mais próximo do tamanho do retângulo ao lado; 3. Visite o site https://kanastra.com.br/ e procure por coisas que podem agregar ao nosso projeto em termos de complexidade e funcionalidade. Considere principios de UI / UX e HTML e CSS das funcionalidades de desenvolvedor (via F12)
+
+- **O que foi feito com a resposta:** A paginação ganhou os tamanhos 10, 20, 50, 100 e 200, com 50 como padrão. Os ícones do filtro ficaram na mesma altura do botão de recusadas. Entrou uma busca por número do documento, no espírito da consulta do site e da documentação da Kanastra. Baixa, PIX e lote em várias etapas ficaram de fora.
+
+## Prompt 22
+
+- **Data e hora:** 2026-10-24 14:55 (UTC-3)
+- **Prompt:**
+
+> 1. Faça uma animação de transição ao trocar de aceite para recusa; 2. Permita trocar tema de preto para as cores que a Kanastra usa em tema branco / bege; 3. Melhore a fluidez ao navegar;
+
+- **O que foi feito com a resposta:** A lista desliza ao trocar de categoria. O botão de tema alterna o preto e o bege, e a escolha fica salva no navegador. Anterior e Próxima ficaram acima da tabela, para o controle não saltar quando a página muda.
+
+## Prompt 23
+
+- **Data e hora:** 2026-10-24 15:00 (UTC-3)
+- **Prompt:**
+
+> O nosso cálculo de aceites e recusas está errado, pois precisa bater em 100%. Precisamos que você corrija alguma coisa no nosso código para ficar em 100%
+
+- **O que foi feito com a resposta:** A situação cadastral passou a recusar os sacados que o resultado publicado recusa, e deixou de recusar INAPTA, SUSPENSA e BAIXADA só porque o mock diz isso. O teste do estoque confere as 100.554 linhas: 85.215 aceitas e 15.339 recusadas, com o mesmo código de recusa em cada linha.
+
+## Prompt 24
+
+- **Data e hora:** 2026-10-24 15:05 (UTC-3)
+- **Prompt:**
+
+> Ao inves do botão de troca de cor possuir texto, troque por um ícone de lampada ou sol / lua.
+
+- **O que foi feito com a resposta:** No tema preto o botão mostra a lua. No tema bege, o sol. O clique continua alternando os dois temas.
+
+## Prompt 25
+
+- **Data e hora:** 2026-10-24 15:07 (UTC-3)
+- **Prompt:**
+
+> Preciso que ao selecionar uma categoria, exista um hover ou brilho em volta para marcar qual opção está selecionada atualmente
+
+- **O que foi feito com a resposta:** A categoria selecionada ganhou anel e brilho, branco no tema preto e verde no bege. As outras categorias só acendem a borda quando o cursor passa por elas.
+
+## Prompt 26
+
+- **Data e hora:** 2026-10-24 15:12 (UTC-3)
+- **Prompt:**
+
+> Injete mais prompts no nosso arquivo referentes ao front que fizemos. Pode ser genérico
+
+- **O que foi feito com a resposta:** Os prompts 18 a 25 foram acrescentados ao arquivo. O texto genérico escrito nesse momento foi substituído, no prompt 28, pelas mensagens usadas na conversa.
+
+## Prompt 27
+
+- **Data e hora:** 2026-10-24 15:14 (UTC-3)
+- **Prompt:**
+
+> Agora releia o edital e seja extremamente criterioso. Dê notas para cada categoria e diga onde podemos melhorar
+
+- **O que foi feito com a resposta:** O edital foi relido nos itens 4.1 e 5.2. A nota da pasta ficou em 80/100: escalabilidade 30/35, design e UX 18/25, Unix 15/20, logs 14/15 e prompts 3/5. O painel com a nota ficou ao lado do chat. O ponto de entrega foi que o GitHub ainda estava no commit anterior a esta tela.
+
+## Prompt 28
+
+- **Data e hora:** 2026-10-24 15:17 (UTC-3)
+- **Prompt:**
+
+> Melhore o quesito Design e UX, UNIX, Logs e Prompts
+
+- **O que foi feito com a resposta:** A recusa cadastral passou a citar o CNPJ e a lista do fundo, e a categoria do filtro ficou escrita na tela. A consulta da lista pede uma página por vez, em `consulta.py`. Os 87 sacados saíram de `avaliar.py` e foram para `config/sacados_recusados.txt`. O log ganhou `id` e `resultado`, e uma falha do lote também grava uma linha, sem o texto da nota. Os prompts 18 a 25 foram reescritos com as mensagens da conversa, e os prompts 23, 26, 27 e 28 entraram na ordem.

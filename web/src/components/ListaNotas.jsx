@@ -31,7 +31,7 @@ export function ListaNotas({ titulo, linhas, vazio, modo }) {
             </thead>
             <tbody>
               {fatia.map((linha, indice) => (
-                <tr key={`${linha.nu_documento}-${inicio + indice}`}>
+                <tr key={`${linha.nu_documento}-${inicio + indice}`} className={modo === "aceitas" ? "linha-aceita" : "linha-recusada"}>
                   <td>{linha.nu_documento || "—"}</td>
                   <td>{modo === "aceitas" ? reais(linha.liquido_centavos) : linha.motivos.join(" ")}</td>
                 </tr>

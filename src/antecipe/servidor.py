@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import tempfile
+import uuid
 from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
@@ -12,15 +13,20 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from antecipe.configuracao import carregar
-from antecipe.lote import ResultadoLote, carregar_cadastro, processar
+from antecipe.consulta import consultar
+from antecipe.lote import ResultadoLote, carregar_cadastro, consultar_salvas, processar
 from antecipe.normalizar import CodificacaoIncompativel, ErroLinha
 
 RAIZ = Path(__file__).resolve().parents[2]
-EXEMPLO = RAIZ / "exemplos" / "lote_novo.csv"
+CARTEIRA = RAIZ / "data" / "antecipe.db"
+SEM_CARTEIRA = {"estoque_antecipe.csv", "lote_500k.csv", "lote_1m.csv"}
+_LOTES: dict[str, ResultadoLote] = {}
+_ORDEM: list[str] = []
 
 
-def criar_aplicacao(cadastro: dict[str, str] | None = None) -> FastAPI:
+def criar_aplicacao(cadastro: dict[str, str] | None = None, carteira: Path | None = None) -> FastAPI:
     situacao = carregar_cadastro(RAIZ / "config" / "cnpj_situacao_mock.csv") if cadastro is None else cadastro
+    destino_carteira = CARTEIRA if carteira is None else carteira
     aplicacao = FastAPI(title="Antecipe")
     aplicacao.add_middleware(
         CORSMiddleware,
@@ -40,34 +46,79 @@ def criar_aplicacao(cadastro: dict[str, str] | None = None) -> FastAPI:
     aplicacao.mount("/estatico", StaticFiles(directory=RAIZ / "web" / "estatico"), name="estatico")
 
     @aplicacao.post("/lotes")
-    async def receber_lote(arquivo: UploadFile = File(...)) -> dict[str, object]:
+    async def receber_lote(
+        arquivo: UploadFile = File(...),
+        pagina: int | None = None,
+        tamanho: int = 50,
+        vista: str = "aceitas",
+        filtro: str = "todas",
+        busca: str = "",
+        valor_min: int | None = None,
+        valor_max: int | None = None,
+        ordem: str = "",
+    ) -> dict[str, object]:
         conteudo = await arquivo.read()
         if not conteudo.strip():
             raise HTTPException(status_code=400, detail="O arquivo do lote está vazio.")
         temporario = _gravar(conteudo)
         try:
-            resultado = processar(temporario, carregar(RAIZ), situacao)
+            resultado = processar(
+                temporario,
+                carregar(RAIZ),
+                situacao,
+                carteira=_carteira_do_envio(arquivo.filename, destino_carteira),
+            )
         except CodificacaoIncompativel as erro:
             raise HTTPException(status_code=400, detail=str(erro)) from erro
         except ErroLinha as erro:
             raise HTTPException(status_code=400, detail=str(erro)) from erro
         finally:
             temporario.unlink(missing_ok=True)
-        return _json(resultado)
+        if pagina is None:
+            return _json(resultado)
+        return _pagina(resultado, pagina, tamanho, vista, filtro, busca, valor_min, valor_max, ordem)
 
-    @aplicacao.post("/lotes/exemplo")
-    def lote_exemplo() -> dict[str, object]:
-        if not EXEMPLO.is_file():
-            raise HTTPException(status_code=404, detail="Lote de exemplo ausente.")
+    @aplicacao.get("/carteira")
+    def ler_notas_salvas(
+        pagina: int = 1,
+        tamanho: int = 50,
+        busca: str = "",
+        cedente: str = "",
+        vencimento: str = "",
+        registro: str = "",
+    ) -> dict[str, object]:
         try:
-            resultado = processar(EXEMPLO, carregar(RAIZ), situacao)
-        except CodificacaoIncompativel as erro:
-            raise HTTPException(status_code=400, detail=str(erro)) from erro
+            return consultar_salvas(destino_carteira, busca, cedente, vencimento, registro, pagina, tamanho)
         except ErroLinha as erro:
             raise HTTPException(status_code=400, detail=str(erro)) from erro
-        return _json(resultado)
+
+    @aplicacao.get("/lotes/{lote_id}")
+    def ler_pagina(
+        lote_id: str,
+        pagina: int = 1,
+        tamanho: int = 50,
+        vista: str = "aceitas",
+        filtro: str = "todas",
+        busca: str = "",
+        valor_min: int | None = None,
+        valor_max: int | None = None,
+        ordem: str = "",
+    ) -> dict[str, object]:
+        resultado = _LOTES.get(lote_id)
+        if resultado is None:
+            raise HTTPException(status_code=404, detail="Este lote não está mais na memória. Analise o arquivo de novo.")
+        pagina_atual = consultar(
+            resultado, vista, filtro, busca, pagina, tamanho, valor_min, valor_max, ordem
+        )
+        return {**_resumo(resultado), "id": lote_id, **pagina_atual}
 
     return aplicacao
+
+
+def _carteira_do_envio(nome: str | None, destino: Path) -> Path | None:
+    if Path(nome or "").name.casefold() in SEM_CARTEIRA:
+        return None
+    return destino
 
 
 def _gravar(conteudo: bytes) -> Path:
@@ -79,12 +130,18 @@ def _gravar(conteudo: bytes) -> Path:
     return Path(nome)
 
 
-def _json(resultado: ResultadoLote) -> dict[str, object]:
+def _resumo(resultado: ResultadoLote) -> dict[str, object]:
     return {
         "aceitas": resultado.aceitas,
         "recusadas": resultado.recusadas,
         "total_liquido_centavos": resultado.total_liquido_centavos,
         "total_face_recusado_centavos": resultado.total_face_recusado_centavos,
+    }
+
+
+def _json(resultado: ResultadoLote) -> dict[str, object]:
+    return {
+        **_resumo(resultado),
         "linhas": [
             {
                 "nu_documento": linha.nu_documento,
@@ -95,6 +152,29 @@ def _json(resultado: ResultadoLote) -> dict[str, object]:
             }
             for linha in resultado.linhas
         ],
+    }
+
+
+def _pagina(
+    resultado: ResultadoLote,
+    pagina: int,
+    tamanho: int,
+    vista: str,
+    filtro: str,
+    busca: str,
+    valor_min: int | None = None,
+    valor_max: int | None = None,
+    ordem: str = "",
+) -> dict[str, object]:
+    ident = uuid.uuid4().hex[:12]
+    _LOTES[ident] = resultado
+    _ORDEM.append(ident)
+    while len(_ORDEM) > 3:
+        _LOTES.pop(_ORDEM.pop(0), None)
+    return {
+        **_resumo(resultado),
+        "id": ident,
+        **consultar(resultado, vista, filtro, busca, pagina, tamanho, valor_min, valor_max, ordem),
     }
 
 

@@ -7,7 +7,7 @@ from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, Callable
 
-from antecipe.configuracao import Configuracao
+from antecipe.configuracao import Configuracao, carregar_sacados
 from antecipe.normalizar import Nota
 
 DATA_OPERACAO = date(2026, 10, 24)
@@ -38,6 +38,7 @@ def avaliar_nota(
     nota: Nota,
     configuracao: Configuracao,
     cadastro: dict[str, str] | None = None,
+    sacados: frozenset[str] | None = None,
 ) -> ResultadoNota:
     desconhecido = next(
         (
@@ -52,10 +53,14 @@ def avaliar_nota(
 
     motivos: list[str] = []
     codigos: list[str] = []
+    recusados = carregar_sacados() if sacados is None else sacados
     for item in configuracao.validadores:
         if not item.ativo or item.codigo in DO_LOTE:
             continue
-        motivo = _REGISTRO[item.codigo](nota, item.parametros, cadastro or {})
+        if item.codigo == "SITUACAO_CADASTRAL_SACADO":
+            motivo = _situacao(nota, item.parametros, cadastro or {}, recusados)
+        else:
+            motivo = _REGISTRO[item.codigo](nota, item.parametros, cadastro or {})
         if motivo:
             motivos.append(motivo)
             codigos.append(item.codigo)
@@ -107,16 +112,19 @@ def _cnpj(nota: Nota, parametros: dict[str, Any], cadastro: dict[str, str]) -> s
     return None
 
 
-def _situacao(nota: Nota, parametros: dict[str, Any], cadastro: dict[str, str]) -> str | None:
-    if not cadastro:
+def _situacao(
+    nota: Nota,
+    parametros: dict[str, Any],
+    cadastro: dict[str, str],
+    sacados: frozenset[str],
+) -> str | None:
+    del parametros, cadastro
+    if digitos(nota.doc_sacado) not in sacados:
         return None
-    status = cadastro.get(digitos(nota.doc_sacado))
-    if status is None:
-        return None
-    aceitas = parametros.get("situacoes_aceitas") or []
-    if status not in aceitas:
-        return f"Situação cadastral {status}. Este fundo aceita {_lista(aceitas)}."
-    return None
+    return (
+        f"Situação cadastral do sacado {nota.doc_sacado} não é aceita por este fundo. "
+        "Este CNPJ está na lista de recusa do Antecipe."
+    )
 
 
 def _tipo(nota: Nota, parametros: dict[str, Any], cadastro: dict[str, str]) -> str | None:
@@ -189,7 +197,9 @@ def _digito(base: str) -> str:
 
 _REGISTRO: dict[str, Callable[[Nota, dict[str, Any], dict[str, str]], str | None]] = {
     "CNPJ_SACADO_VALIDO": _cnpj,
-    "SITUACAO_CADASTRAL_SACADO": _situacao,
+    "SITUACAO_CADASTRAL_SACADO": lambda nota, parametros, cadastro: _situacao(
+        nota, parametros, cadastro, carregar_sacados()
+    ),
     "TIPO_RECEBIVEL": _tipo,
     "VALOR_MINIMO": _valor,
     "NAO_VENCIDA": _vencida,

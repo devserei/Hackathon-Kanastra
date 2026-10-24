@@ -78,6 +78,23 @@ def _texto(origem: dict[str, Any], campo: str) -> str:
     return valor
 
 
+def carregar_sacados(raiz: Path | None = None) -> frozenset[str]:
+    base = Path(__file__).resolve().parents[2] if raiz is None else raiz
+    caminho = base / "config" / "sacados_recusados.txt"
+    if not caminho.is_file():
+        raise ConfiguracaoInvalida("arquivo ausente: sacados_recusados.txt")
+    sacados: set[str] = set()
+    for linha in caminho.read_text(encoding="utf-8").splitlines():
+        texto = linha.strip()
+        if not texto or texto.startswith("#"):
+            continue
+        numeros = "".join(caractere for caractere in texto if caractere.isdigit())
+        if len(numeros) != 14:
+            raise ConfiguracaoInvalida("sacado recusado sem 14 dígitos")
+        sacados.add(numeros)
+    return frozenset(sacados)
+
+
 def _ler_json(caminho: Path) -> Any:
     if not caminho.is_file():
         raise ConfiguracaoInvalida(f"arquivo ausente: {caminho.name}")

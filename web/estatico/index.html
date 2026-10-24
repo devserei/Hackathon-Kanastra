@@ -4,34 +4,108 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Antecipe</title>
-    <link rel="stylesheet" href="/estatico/app.css" />
+    <link rel="stylesheet" href="/estatico/scanner.css" />
+    <link rel="stylesheet" href="/estatico/lattice.css" />
+    <link rel="stylesheet" href="/estatico/dock.css" />
+    <link rel="stylesheet" href="/estatico/topography.css" />
+    <link rel="stylesheet" href="/estatico/app.css?v=salvas" />
   </head>
   <body>
-    <main>
+    <section id="boas-vindas" class="boas-vindas">
+      <div class="fundo-topo"></div>
+      <div class="boas-vindas-conteudo">
+        <h1>BEM VINDO AO SISTEMA ANTECIPE</h1>
+        <button id="entrar" class="entrar" type="button">Começar</button>
+      </div>
+    </section>
+    <div class="fundo scanner-container"></div>
+    <main hidden>
       <header>
-        <p class="marca">Antecipe FIDC</p>
-        <h1>Lote de recebíveis</h1>
+        <div>
+          <p class="marca">Antecipe FIDC</p>
+          <h1>Lote de recebíveis</h1>
+        </div>
+        <button id="tema" class="secundario tema" type="button" aria-pressed="false" aria-label="Usar tema bege">
+          <svg class="icone-lua" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 14.5A7.5 7.5 0 0 1 9.5 4 7.5 7.5 0 1 0 20 14.5z" />
+          </svg>
+          <svg class="icone-sol" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 3v1.5M12 19.5V21M3 12h1.5M19.5 12H21M5.6 5.6l1.1 1.1M17.3 17.3l1.1 1.1M18.4 5.6l-1.1 1.1M6.7 17.3l-1.1 1.1" />
+          </svg>
+        </button>
       </header>
       <form class="envio" id="envio">
-        <label>
-          CSV do lote
+        <label class="arquivo">
+          <span>Arquivo com os recibos do lote</span>
           <input id="arquivo" type="file" accept=".csv,text/csv" />
+          <strong id="nome">Clique aqui e insira o arquivo com os recibos</strong>
         </label>
-        <button id="enviar" type="submit" disabled>Analisar lote</button>
-        <button id="exemplo" type="button">Lote de exemplo</button>
+        <div class="acoes">
+          <button id="enviar" type="submit" disabled>Clique aqui para analisar o lote</button>
+          <button id="consultar-salvas" class="secundario" type="button">Consultar notas salvas</button>
+        </div>
       </form>
+      <div class="estado" id="estado" hidden></div>
       <p class="erro" id="erro" hidden></p>
       <section class="resumo" id="resumo" hidden>
-        <p><span>Aceitas</span><strong id="aceitas"></strong></p>
-        <p><span>Recusadas</span><strong id="recusadas"></strong></p>
+        <p class="barra-aceita"><span>Aceitas</span><strong id="aceitas"></strong></p>
+        <p class="barra-recusada"><span>Recusadas</span><strong id="recusadas"></strong></p>
         <p><span>Líquido do lote</span><strong id="liquido"></strong></p>
-        <p><span>Face que ficou de fora</span><strong id="face"></strong></p>
       </section>
       <div id="listas" hidden>
-        <section id="bloco-aceitas"></section>
-        <section id="bloco-recusadas"></section>
+        <div class="alternar">
+          <button id="ver-aceitas" class="aba aba-aceita" type="button" aria-pressed="true">Aceitas</button>
+          <button id="ver-recusadas" class="aba aba-recusada" type="button" aria-pressed="false">Recusadas</button>
+          <button id="ver-salvas" class="aba aba-salva" type="button" aria-pressed="false">Salvas</button>
+          <div id="dock" hidden></div>
+        </div>
+        <div class="ferramentas">
+          <p id="categoria" class="categoria" hidden>Categoria: Todas</p>
+          <label class="busca">
+            <span>Documento</span>
+            <input id="busca" type="search" placeholder="Buscar número" autocomplete="off" />
+          </label>
+          <div class="faixa" id="faixa">
+            <span>Líquido</span>
+            <label>
+              <input id="valor-min" inputmode="decimal" placeholder="Mín." autocomplete="off" aria-label="Líquido mínimo" />
+            </label>
+            <label>
+              <input id="valor-max" inputmode="decimal" placeholder="Máx." autocomplete="off" aria-label="Líquido máximo" />
+            </label>
+          </div>
+          <div id="consulta-salva" hidden>
+            <label class="busca">
+              <span>Cedente</span>
+              <input id="cedente" type="search" placeholder="CNPJ" autocomplete="off" />
+            </label>
+            <label class="busca">
+              <span>Vencimento</span>
+              <input id="vencimento" type="search" placeholder="dd/mm/aaaa" autocomplete="off" />
+            </label>
+            <label class="busca">
+              <span>Registro</span>
+              <input id="registro" type="search" placeholder="mm/aaaa" autocomplete="off" />
+            </label>
+          </div>
+          <div class="ordens" id="ordens" role="group" aria-label="Ordem do líquido">
+            <span>Ordem</span>
+            <button class="tamanho ordem" type="button" data-ordem="crescente">Crescente</button>
+            <button class="tamanho ordem" type="button" data-ordem="decrescente">Decrescente</button>
+          </div>
+          <div class="tamanhos" role="group" aria-label="Notas por página">
+            <span>Por página</span>
+            <button class="tamanho" type="button" data-tamanho="10">10</button>
+            <button class="tamanho" type="button" data-tamanho="20">20</button>
+            <button class="tamanho" type="button" data-tamanho="50" aria-pressed="true">50</button>
+            <button class="tamanho" type="button" data-tamanho="100">100</button>
+            <button class="tamanho" type="button" data-tamanho="200">200</button>
+          </div>
+        </div>
+        <section id="bloco-lista"></section>
       </div>
     </main>
-    <script src="/estatico/app.js"></script>
+    <script type="module" src="/estatico/app.js?v=sem-exemplo"></script>
   </body>
 </html>

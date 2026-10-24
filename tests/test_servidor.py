@@ -1,4 +1,5 @@
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -37,7 +38,12 @@ def _linha(**trocas: str) -> str:
 
 class ServidorTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.cliente = TestClient(criar_aplicacao({}))
+        self.pasta = tempfile.TemporaryDirectory()
+        carteira = Path(self.pasta.name) / "antecipe.db"
+        self.cliente = TestClient(criar_aplicacao({}, carteira))
+
+    def tearDown(self) -> None:
+        self.pasta.cleanup()
 
     def test_devolve_a_decisao_do_lote(self) -> None:
         lote = _csv(
@@ -54,6 +60,33 @@ class ServidorTest(unittest.TestCase):
         self.assertTrue(corpo["linhas"][0]["aceita"])
         self.assertIn("CONCENTRACAO_MAXIMA_SACADO", corpo["linhas"][1]["codigos"])
 
+    def test_segunda_consulta_recusa_a_mesma_nota(self) -> None:
+        lote = _csv(
+            _linha(NU_DOCUMENTO="OUTRA", VALOR_NOMINAL="100,00", DOC_SACADO="01.000.171/0001-83"),
+            _linha(NU_DOCUMENTO="BASE", VALOR_NOMINAL="5000,00", DOC_SACADO="01.026.553/0001-86"),
+        )
+        arquivos = {"arquivo": ("lote.csv", lote, "text/csv")}
+        primeira = self.cliente.post("/lotes", files=arquivos)
+        self.assertEqual(primeira.status_code, 200)
+        self.assertEqual(primeira.json()["aceitas"], 1)
+        segunda = self.cliente.post("/lotes", files=arquivos)
+        self.assertEqual(segunda.status_code, 200)
+        outra = next(linha for linha in segunda.json()["linhas"] if linha["nu_documento"] == "OUTRA")
+        self.assertIn("já foi adquirida", outra["motivos"][0])
+
+    def test_estoque_nao_entra_na_carteira(self) -> None:
+        lote = _csv(
+            _linha(NU_DOCUMENTO="OUTRA", VALOR_NOMINAL="100,00", DOC_SACADO="01.000.171/0001-83"),
+            _linha(NU_DOCUMENTO="BASE", VALOR_NOMINAL="5000,00", DOC_SACADO="01.026.553/0001-86"),
+        )
+        arquivos = {"arquivo": ("estoque_antecipe.csv", lote, "text/csv")}
+        primeira = self.cliente.post("/lotes", files=arquivos)
+        segunda = self.cliente.post("/lotes", files=arquivos)
+        self.assertEqual(primeira.status_code, 200)
+        self.assertEqual(primeira.json()["aceitas"], 1)
+        self.assertEqual(segunda.json()["aceitas"], 1)
+        self.assertFalse((Path(self.pasta.name) / "antecipe.db").exists())
+
     def test_arquivo_vazio(self) -> None:
         resposta = self.cliente.post("/lotes", files={"arquivo": ("lote.csv", b"   ", "text/csv")})
         self.assertEqual(resposta.status_code, 400)
@@ -67,21 +100,18 @@ class ServidorTest(unittest.TestCase):
         self.assertIn("UTF-8", resposta.json()["detail"])
 
 
-class LoteExemploTest(unittest.TestCase):
-    def test_junta_o_exemplo_com_o_estoque(self) -> None:
-        cliente = TestClient(criar_aplicacao())
-        resposta = cliente.post("/lotes/exemplo")
+    def test_a_pagina_nao_traz_o_lote_inteiro(self) -> None:
+        lote = _csv(
+            _linha(NU_DOCUMENTO="BOA", VALOR_NOMINAL="100,00", DOC_SACADO="01.000.171/0001-83"),
+            _linha(NU_DOCUMENTO="BASE", VALOR_NOMINAL="5000,00", DOC_SACADO="01.026.553/0001-86"),
+        )
+        resposta = self.cliente.post(
+            "/lotes",
+            files={"arquivo": ("lote.csv", lote, "text/csv")},
+            params={"pagina": 1, "tamanho": 10, "vista": "aceitas"},
+        )
         self.assertEqual(resposta.status_code, 200)
         corpo = resposta.json()
-        por_numero = {linha["nu_documento"]: linha for linha in corpo["linhas"]}
-        self.assertTrue(por_numero["NOVA-100"]["aceita"])
-        self.assertEqual(por_numero["NOVA-100"]["liquido_centavos"], 49000)
-        self.assertIn("Cheque", por_numero["NOVA-CHEQUE"]["motivos"][0])
-        self.assertIn("mínimo", por_numero["NOVA-BAIXA"]["motivos"][0])
-        self.assertIn("Prazo", por_numero["NOVA-PRAZO"]["motivos"][0])
-        self.assertIn("BAIXADA", por_numero["NOVA-SIT"]["motivos"][0])
-        self.assertIn("limite", por_numero["NOVA-GRUPO"]["motivos"][0])
-        self.assertIn("já foi adquirida", por_numero["DUP-1"]["motivos"][0])
-        self.assertEqual(corpo["aceitas"], 2)
-        self.assertEqual(corpo["total_liquido_centavos"], 58800)
-        self.assertEqual(corpo["total_face_recusado_centavos"], 445_000)
+        self.assertEqual(corpo["aceitas"], 1)
+        self.assertEqual(corpo["total_lista"], 1)
+        self.assertEqual(len(corpo["linhas"]), 1)

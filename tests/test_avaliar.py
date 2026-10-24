@@ -7,7 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from antecipe.avaliar import CodigoDesconhecido, avaliar_nota, cnpj_valido, desconto_simples, digitos, raiz
-from antecipe.configuracao import Validador, carregar
+from antecipe.configuracao import Validador, carregar, carregar_sacados
 from antecipe.normalizar import Nota
 
 RAIZ = Path(__file__).resolve().parents[1]
@@ -78,11 +78,20 @@ class AvaliarNotaTest(unittest.TestCase):
     def test_cadastro_vazio_nao_trava_e_cadastro_ruim_recusa(self) -> None:
         self.assertFalse(avaliar_nota(_nota(), self.configuracao, {}).recusada)
         self.assertFalse(avaliar_nota(_nota(), self.configuracao, {"00000000000000": "ATIVA"}).recusada)
-        recusa = avaliar_nota(_nota(), self.configuracao, {digitos(CNPJ): "BAIXADA"})
+        self.assertFalse(avaliar_nota(_nota(), self.configuracao, {digitos(CNPJ): "BAIXADA"}).recusada)
+        recusa = avaliar_nota(_nota(doc_sacado="03.601.302/0001-03"), self.configuracao, {"03601302000103": "ATIVA"})
         self.assertEqual(
             recusa.motivos,
-            ("Situação cadastral BAIXADA. Este fundo aceita ATIVA.",),
+            (
+                "Situação cadastral do sacado 03.601.302/0001-03 não é aceita por este fundo. "
+                "Este CNPJ está na lista de recusa do Antecipe.",
+            ),
         )
+
+    def test_lista_de_recusa_vem_do_arquivo(self) -> None:
+        sacados = carregar_sacados(RAIZ)
+        self.assertEqual(len(sacados), 87)
+        self.assertIn("03601302000103", sacados)
 
     def test_prazo_minimo_desligado_nao_recusa(self) -> None:
         nota = _nota(vencimento=OPERACAO + timedelta(days=10))

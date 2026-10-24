@@ -14,9 +14,12 @@ logs/*
 !logs/.gitkeep
 *.log
 
-# Dataset local (arquivo grande, fornecido pela organização)
+# Dataset local, banco e lotes gerados — não versionar
 data/*
 !data/.gitkeep
+*.db
+*.db-wal
+*.db-shm
 
 # Dependências e artefatos de build
 node_modules/
