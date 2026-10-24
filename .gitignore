@@ -1,0 +1,43 @@
+# Segredos e credenciais — não versionar
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+credentials.json
+secrets.json
+secrets/
+
+# Logs de execução — a saída pode conter dados do CSV
+logs/*
+!logs/.gitkeep
+*.log
+
+# Dataset local (arquivo grande, fornecido pela organização)
+data/*
+!data/.gitkeep
+
+# Dependências e artefatos de build
+node_modules/
+dist/
+build/
+.next/
+out/
+coverage/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+.eggs/
+
+# Sistema e editores
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
