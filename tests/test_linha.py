@@ -57,7 +57,10 @@ class LinhaTest(unittest.TestCase):
             ler_linha("só;tres;campos")
 
     def test_primeira_linha_do_estoque(self) -> None:
-        texto = ler_texto(RAIZ / "data" / "estoque_antecipe.csv")
+        caminho = RAIZ / "data" / "estoque_antecipe.csv"
+        if not caminho.is_file():
+            self.skipTest("arquivo do Notion ausente")
+        texto = ler_texto(caminho)
         nota = ler_linha(texto.splitlines()[1])
         self.assertEqual(nota.nu_documento, "725714")
         self.assertEqual(nota.doc_sacado, "22.144.961/0001-02")

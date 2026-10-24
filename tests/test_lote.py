@@ -214,7 +214,10 @@ class LoteTest(unittest.TestCase):
         self.assertIn("limite", resultado.linhas[0].motivos[0])
 
     def test_estoque_publicado_tem_uma_raiz_acima_do_limite(self) -> None:
-        indice = montar(RAIZ / "data" / "estoque_antecipe.csv", FUNDO)
+        caminho = RAIZ / "data" / "estoque_antecipe.csv"
+        if not caminho.is_file():
+            self.skipTest("arquivo do Notion ausente")
+        indice = montar(caminho, FUNDO)
         acima = [valor for valor in indice.por_raiz_centavos.values() if valor * 100 > indice.total_fundo_centavos * 10]
         self.assertEqual(len(acima), 1)
         self.assertGreater(len(indice.chaves), 100_000)
